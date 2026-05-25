@@ -81,7 +81,7 @@ def group(unique_labels, counts, min_points_threshold=100):
 
 
 group(unique_labels, counts)
-mask = labels == 1 # Change this to view clusters
+mask = labels == 0 # Change this to view clusters
 points = points[mask]
 def plot_pointcloud_in_pybullet(points: np.ndarray,
                                 point_size=3.0,
