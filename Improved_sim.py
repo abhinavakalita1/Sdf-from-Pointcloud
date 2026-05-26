@@ -168,58 +168,69 @@ for lbl in unique_labels:
 
 
 # ══════════════════════════════════════════════════════════════
-# 5.  BUILD cKDTREE + DELAUNAY HULL PER CLUSTER
-#
-#   cKDTree  → fast compiled C nearest-neighbour (replaces Python BVH)
-#   Delaunay → exact convex-hull membership for sign (replaces AABB sign)
+# 5.  BUILD cKDTREE + QHULL PER CLUSTER
 # ══════════════════════════════════════════════════════════════
 
-kdtrees        = []
-delaunay_hulls = []
+t = time.time()
+from scipy.spatial import cKDTree, ConvexHull
+
+kdtrees   = []
+qhulls    = []   # stores (equations,) from ConvexHull
 
 for i, cpts in enumerate(cluster_pts):
     kdtrees.append(cKDTree(cpts))
 
     try:
-        delaunay_hulls.append(Delaunay(cpts))
-        print(f"  Cluster {i}: KDTree + Delaunay hull built")
+        hull = ConvexHull(cpts)
+        # hull.equations: each row is [normal_x, normal_y, normal_z, offset]
+        # A point p is INSIDE the hull if:
+        #   hull.equations[:, :3] @ p + hull.equations[:, 3] <= 0  for ALL rows
+        qhulls.append(hull.equations)
+        print(f"  Cluster {i}: KDTree + QHull built  "
+              f"({len(hull.equations)} facets)")
     except Exception as e:
-        delaunay_hulls.append(None)
-        print(f"  Cluster {i}: KDTree built, Delaunay failed ({e}) — sign approx only")
+        qhulls.append(None)
+        print(f"  Cluster {i}: KDTree built, QHull failed ({e}) — outside assumed")
 
+print(time.time()-t)
 
 # ══════════════════════════════════════════════════════════════
-# 6.  SDF FUNCTION
+# 6.  SDF FUNCTION  (QHull sign)
 # ══════════════════════════════════════════════════════════════
+
+def _inside_qhull(pt: np.ndarray, equations: np.ndarray) -> bool:
+    """
+    Returns True if pt is inside the convex hull defined by equations.
+
+    Each row of equations is [nx, ny, nz, d] where the half-space is:
+        nx*x + ny*y + nz*z + d <= 0  (pointing inward)
+
+    A point is inside if it satisfies ALL half-space inequalities.
+    We add a small tolerance (1e-10) to handle numerical boundary cases.
+    """
+    return bool(np.all(equations[:, :3] @ pt + equations[:, 3] <= 1e-10))
+
 
 def sdf_scene(pt) -> float:
     """
-    Signed distance from world-frame point pt to the obstacle scene.
-
-    Distance : cKDTree nearest-neighbour  (compiled C, fast)
-    Sign      : Delaunay hull membership  (exact for convex clusters)
-                  d < 0  →  inside obstacle  (collision)
-                  d > 0  →  outside          (safe)
-                  d = 0  →  on surface
-
-    Scene SDF = min over all clusters (most negative wins).
+    Signed distance using:
+      cKDTree   → distance magnitude  (fast compiled C)
+      QHull     → sign via half-space equations  (direct Qhull output)
     """
     pt       = np.asarray(pt, dtype=float)
     best_d   = np.inf
     best_sgn = +1.0
 
-    for kdt, hull in zip(kdtrees, delaunay_hulls):
+    for kdt, equations in zip(kdtrees, qhulls):
         d = float(kdt.query(pt, k=1)[0])
         if d < best_d:
             best_d = d
-            if hull is not None:
-                # find_simplex >= 0  →  inside convex hull
-                best_sgn = -1.0 if hull.find_simplex(pt) >= 0 else +1.0
+            if equations is not None:
+                best_sgn = -1.0 if _inside_qhull(pt, equations) else +1.0
             else:
-                best_sgn = +1.0     # conservative: assume outside if hull failed
+                best_sgn = +1.0
 
     return best_sgn * best_d
-
 
 # ══════════════════════════════════════════════════════════════
 # 7.  HELPERS
@@ -372,7 +383,7 @@ ax.set_ylabel("Error  (m)")
 ax.set_xticks(xs)
 ax.legend(frameon=False)
 plt.tight_layout()
-# plt.savefig("plot1_mae_rmse.png", dpi=150, bbox_inches="tight")
+plt.savefig("plot1_mae_rmse.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("[INFO] Saved plot1_mae_rmse.png")
 
@@ -387,7 +398,7 @@ ax.set_xlabel("Configs evaluated")
 ax.set_ylabel("|BVH − GT|  max  (m)")
 ax.set_xticks(xs)
 plt.tight_layout()
-# plt.savefig("plot2_max_error.png", dpi=150, bbox_inches="tight")
+plt.savefig("plot2_max_error.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("[INFO] Saved plot2_max_error.png")
 
@@ -409,7 +420,7 @@ ax.legend(handles=[Patch(color=GREEN, label="BVH overestimates (safe)"),
                    Patch(color=RED,   label="BVH underestimates (unsafe)")],
           frameon=False, fontsize=9)
 plt.tight_layout()
-# plt.savefig("plot3_bias.png", dpi=150, bbox_inches="tight")
+plt.savefig("plot3_bias.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("[INFO] Saved plot3_bias.png")
 
@@ -428,7 +439,7 @@ for x, v in zip(xs, interval_col_agree):
     ax.text(x, v - 3.5, f"{v:.1f}%", ha="center", va="top", fontsize=9, color=PURPLE)
 ax.legend(frameon=False)
 plt.tight_layout()
-# plt.savefig("plot4_collision_agree.png", dpi=150, bbox_inches="tight")
+plt.savefig("plot4_collision_agree.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("[INFO] Saved plot4_collision_agree.png")
 
@@ -452,7 +463,7 @@ ax.text(-lim*0.55, -lim*0.82, "Both collision",  fontsize=9, color=GRAY, ha="cen
 ax.text(-lim*0.55,  lim*0.82, "False positive",  fontsize=9, color=RED,  ha="center")
 ax.text( lim*0.55, -lim*0.82, "False negative",  fontsize=9, color=ORANGE, ha="center")
 plt.tight_layout()
-# plt.savefig("plot5_scatter.png", dpi=150, bbox_inches="tight")
+plt.savefig("plot5_scatter.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("[INFO] Saved plot5_scatter.png")
 
@@ -469,7 +480,7 @@ ax.set_xlabel("|BVH SDF − GT|  (m)")
 ax.set_ylabel("Count")
 ax.legend(frameon=False)
 plt.tight_layout()
-# plt.savefig("plot6_error_hist.png", dpi=150, bbox_inches="tight")
+plt.savefig("plot6_error_hist.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("[INFO] Saved plot6_error_hist.png")
 
@@ -492,7 +503,7 @@ ax.text(0.98, 0.96,
         transform=ax.transAxes, ha="right", va="top", fontsize=10, color=BLUE,
         bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=BLUE, lw=0.8))
 plt.tight_layout()
-# plt.savefig("plot7_timing.png", dpi=150, bbox_inches="tight")
+plt.savefig("plot7_timing.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("[INFO] Saved plot7_timing.png")
 
@@ -540,7 +551,7 @@ ax2.set_title("Classification counts")
 ax2.set_ylabel("Count")
 
 plt.tight_layout()
-# plt.savefig("plot8_confusion.png", dpi=150, bbox_inches="tight")
+plt.savefig("plot8_confusion.png", dpi=150, bbox_inches="tight")
 plt.show()
 print("[INFO] Saved plot8_confusion.png")
 
