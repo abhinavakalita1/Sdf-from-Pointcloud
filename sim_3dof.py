@@ -8,6 +8,8 @@ import matplotlib.colors as mcolors
 from dataclasses import dataclass, field
 from typing import Optional
 import time
+import os
+import json
 
 
 # ══════════════════════════════════════════════════════════════
@@ -82,6 +84,22 @@ def sdf_scene(pt: np.ndarray, bvh_list: list) -> float:
 # ══════════════════════════════════════════════════════════════
 # 2.  CLUSTERING
 # ══════════════════════════════════════════════════════════════
+
+CONFIG_FILE          = "dbscan_config.json"
+
+def load_config(path=CONFIG_FILE):
+    if os.path.exists(path):
+        with open(path) as f:
+            cfg = json.load(f)
+        print(f"[INFO] Loaded camera config from {path}")
+        return cfg
+    print(f"[INFO] No config found at {path} — using defaults")
+    return None
+
+params      = load_config()
+density = params["density"]
+eps = params["eps"]
+min_samples = params["min_samples"]
 
 def plot_point_cloud(points, squish=0):
     fig = plt.figure(figsize=(8, 8))

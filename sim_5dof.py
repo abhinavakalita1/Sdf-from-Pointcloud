@@ -7,6 +7,8 @@ import time
 import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
 from typing import Optional
+import json
+import os
 
 
 # ══════════════════════════════════════════════════════════════
@@ -91,6 +93,22 @@ def sdf_scene(pt: np.ndarray, bvh_list: list) -> float:
 # 2.  YOUR ORIGINAL CLUSTERING CODE  (unchanged)
 # ══════════════════════════════════════════════════════════════
 
+CONFIG_FILE          = "dbscan_config.json"
+
+def load_config(path=CONFIG_FILE):
+    if os.path.exists(path):
+        with open(path) as f:
+            cfg = json.load(f)
+        print(f"[INFO] Loaded camera config from {path}")
+        return cfg
+    print(f"[INFO] No config found at {path} — using defaults")
+    return None
+
+params      = load_config()
+density = params["density"]
+eps = params["eps"]
+min_samples = params["min_samples"]
+
 def plot_point_cloud(points, squish=0):
     fig = plt.figure(figsize=(8, 8))
     ax  = fig.add_subplot(111, projection='3d')
@@ -137,7 +155,7 @@ def group(points, labels, min_points_threshold=100):
     return labels
 
 
-def find_clusters(points, eps=0.082, min_samples=3):
+def find_clusters(points, eps=eps, min_samples=min_samples):
     db     = DBSCAN(eps=eps, min_samples=min_samples).fit(points)
     labels = db.labels_.copy()
     labels = group(points, labels)

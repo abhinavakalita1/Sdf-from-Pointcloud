@@ -6,6 +6,8 @@ import pybullet as p
 import time
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
+import os
+import json
 
 
 # ══════════════════════════════════════════════════════════════
@@ -118,6 +120,22 @@ points = sample_pointcloud(obstacle_ids, n_vertical=30000, regen=False)
 # ══════════════════════════════════════════════════════════════
 # 4.  CLUSTERING
 # ══════════════════════════════════════════════════════════════
+
+CONFIG_FILE          = "dbscan_config.json"
+
+def load_config(path=CONFIG_FILE):
+    if os.path.exists(path):
+        with open(path) as f:
+            cfg = json.load(f)
+        print(f"[INFO] Loaded camera config from {path}")
+        return cfg
+    print(f"[INFO] No config found at {path} — using defaults")
+    return None
+
+params      = load_config()
+density = params["density"]
+eps = params["eps"]
+min_samples = params["min_samples"]
 
 def group(points, labels, min_points_threshold=100):
     unique_labels, counts = np.unique(labels, return_counts=True)
