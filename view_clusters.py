@@ -381,7 +381,7 @@ while True:
 
 
 # ══════════════════════════════════════════════════════════════
-# SAVE CONFIG ON EXIT
+# SAVE CONFIG + UPDATED POINTCLOUD ON EXIT
 # ══════════════════════════════════════════════════════════════
 
 final_cfg = {
@@ -391,5 +391,20 @@ final_cfg = {
     "show_cluster": prev_show        if prev_show        is not None else DEFAULTS["show_cluster"],
 }
 save_config(final_cfg)
+
+# Save the final (possibly interpolated/subsampled) pointcloud
+# pts and lbl are the last rendered arrays from the loop
+try:
+    if pts is not None and len(pts) > 0:
+        np.save("points.npy", pts)
+        print(f"[INFO] points.npy updated → {len(pts)} points saved")
+        if len(pts) != len(ALL_POINTS):
+            diff = len(pts) - len(ALL_POINTS)
+            print(f"       ({'+' if diff > 0 else ''}{diff} vs original {len(ALL_POINTS)})")
+    else:
+        print("[WARN] No points to save — points.npy unchanged")
+except NameError:
+    print("[WARN] Loop never ran — points.npy unchanged")
+
 p.disconnect()
 print("[INFO] Done.")

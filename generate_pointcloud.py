@@ -27,7 +27,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 # ── Toggle ────────────────────────────────────────────────────
-CAMERA_ADJUSTER_MODE = False    # set False to skip adjuster and go straight to pointcloud
+CAMERA_ADJUSTER_MODE = True    # set False to skip adjuster and go straight to pointcloud
 CONFIG_FILE          = "cameras.json"
 
 
@@ -62,10 +62,34 @@ def create_cylinder(radius=0.5, height=1.0, position=[0,0,0], orientation=[0,0,0
     quat = p.getQuaternionFromEuler(orientation)
     return p.createMultiBody(mass, col, vis, position, quat)
 
-boxId      = create_box(half_extents=[1,1,1],      position=[2,0,1],      orientation=[0.2,1.1,0.4])
-sphereId   = create_sphere(radius=1,               position=[0,2,1])
-cylinderId = create_cylinder(radius=0.3, height=2, position=[-0.5,0,1],   orientation=[1.3,0,0])
+# boxId      = create_box(half_extents=[1,1,1],      position=[2,0,1],      orientation=[0.2,1.1,0.4])
+# sphereId   = create_sphere(radius=1,               position=[0,2,1])
+# cylinderId = create_cylinder(radius=0.3, height=2, position=[-0.5,0,1],   orientation=[1.3,0,0])
 
+def load_mesh_obstacle(obj_path, position=[0,0,0],
+                       orientation=[0,0,0], scale=1.0,
+                       color=[0.8, 0.5, 0.2, 1]):
+    col  = p.createCollisionShape(
+        p.GEOM_MESH,
+        fileName=obj_path,
+        meshScale=[scale, scale, scale],
+        flags = p.GEOM_FORCE_CONCAVE_TRIMESH
+    )
+    vis  = p.createVisualShape(
+        p.GEOM_MESH,
+        fileName=obj_path,
+        meshScale=[scale, scale, scale],
+        rgbaColor=color
+    )
+    quat = p.getQuaternionFromEuler(orientation)
+    return p.createMultiBody(0, col, vis, position, quat)
+
+# glassId   = load_mesh_obstacle("glass.obj",   position=[1, 0.3, 1], scale=0.1)
+# bottleId = load_mesh_obstacle("Plastic-Bottle.obj", position=[-1,   0, 0], scale=0.1)
+concaveId = load_mesh_obstacle("concave.obj", position=[0,   0.5, 0], scale=0.4)
+
+obstacle_ids   = [concaveId]
+obstacle_names = ["Concave"]
 
 # ══════════════════════════════════════════════════════════════
 # CAMERA CAPTURE FUNCTION
@@ -365,7 +389,7 @@ def generate_pointcloud(cam_params, sparsity=4):
     return points
 
 
-def remove_floor_ransac(points, threshold=0.1, iterations=100):
+def remove_floor_ransac(points, threshold=0.15, iterations=100):
     if len(points) < 100:
         return points
     best_inliers = np.zeros(len(points), dtype=bool)

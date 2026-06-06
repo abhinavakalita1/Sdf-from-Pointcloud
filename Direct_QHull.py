@@ -56,12 +56,34 @@ def create_cylinder(radius=0.5, height=1.0, position=[0,0,0],
     vis = p.createVisualShape(p.GEOM_CYLINDER, radius=radius, length=height, rgbaColor=color)
     return p.createMultiBody(mass, col, vis, position, p.getQuaternionFromEuler(orientation))
 
-boxId      = create_box(half_extents=[1,1,1],      position=[2,0,1],      orientation=[0.2,1.1,0.4])
-sphereId   = create_sphere(radius=1,               position=[0,2,1])
-cylinderId = create_cylinder(radius=0.3, height=2, position=[-0.5,0,1],   orientation=[1.3,0,0])
-obstacle_ids   = [boxId, sphereId, cylinderId]
-obstacle_names = ["Box", "Sphere", "Cylinder"]
-print(f"[INFO] Obstacles: box={boxId}, sphere={sphereId}, cylinder={cylinderId}")
+# boxId      = create_box(half_extents=[1,1,1],      position=[2,0,1],      orientation=[0.2,1.1,0.4])
+# sphereId   = create_sphere(radius=1,               position=[0,2,1])
+# cylinderId = create_cylinder(radius=0.3, height=2, position=[-0.5,0,1],   orientation=[1.3,0,0])
+
+def load_mesh_obstacle(obj_path, position=[0,0,0],
+                       orientation=[0,0,0], scale=1.0,
+                       color=[0.8, 0.5, 0.2, 1]):
+    col  = p.createCollisionShape(
+        p.GEOM_MESH,
+        fileName=obj_path,
+        meshScale=[scale, scale, scale],
+        flags = p.GEOM_FORCE_CONCAVE_TRIMESH
+    )
+    vis  = p.createVisualShape(
+        p.GEOM_MESH,
+        fileName=obj_path,
+        meshScale=[scale, scale, scale],
+        rgbaColor=color
+    )
+    quat = p.getQuaternionFromEuler(orientation)
+    return p.createMultiBody(0, col, vis, position, quat)
+
+# glassId   = load_mesh_obstacle("glass.obj",   position=[1, 0.3, 1], scale=0.1)
+# bottleId = load_mesh_obstacle("Plastic-Bottle.obj", position=[-1,   0, 0], scale=0.1)
+concaveId = load_mesh_obstacle("concave.obj", position=[0,   0.5, 0], scale=0.4)
+
+# obstacle_ids   = [concaveId]
+# obstacle_names = ["Concave"]
 
 
 # ══════════════════════════════════════════════════════════════
@@ -161,7 +183,7 @@ def group(points, labels, min_points_threshold=100):
     return labels
 
 
-def find_clusters(points, eps=0.082, min_samples=3):
+def find_clusters(points, eps=eps, min_samples=min_samples):
     db     = DBSCAN(eps=eps, min_samples=min_samples).fit(points)
     labels = db.labels_.copy()
     labels = group(points, labels)
