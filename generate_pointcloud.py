@@ -62,9 +62,10 @@ def create_cylinder(radius=0.5, height=1.0, position=[0,0,0], orientation=[0,0,0
     quat = p.getQuaternionFromEuler(orientation)
     return p.createMultiBody(mass, col, vis, position, quat)
 
-# boxId      = create_box(half_extents=[1,1,1],      position=[2,0,1],      orientation=[0.2,1.1,0.4])
-# sphereId   = create_sphere(radius=1,               position=[0,2,1])
-# cylinderId = create_cylinder(radius=0.3, height=2, position=[-0.5,0,1],   orientation=[1.3,0,0])
+boxId      = create_box(half_extents=[1,1,1],      position=[2,0,1],      orientation=[0.2,1.1,0.4])
+sphereId   = create_sphere(radius=1,               position=[0,2,1])
+cylinderId = create_cylinder(radius=0.3, height=2, position=[-0.5,0,1],   orientation=[1.3,0,0])
+# box2Id      = create_box(half_extents=[1,1,.2],      position=[0,0,3],      orientation=[0, 0, 0])
 
 def load_mesh_obstacle(obj_path, position=[0,0,0],
                        orientation=[0,0,0], scale=1.0,
@@ -86,10 +87,10 @@ def load_mesh_obstacle(obj_path, position=[0,0,0],
 
 # glassId   = load_mesh_obstacle("glass.obj",   position=[1, 0.3, 1], scale=0.1)
 # bottleId = load_mesh_obstacle("Plastic-Bottle.obj", position=[-1,   0, 0], scale=0.1)
-concaveId = load_mesh_obstacle("concave.obj", position=[0,   0.5, 0], scale=0.4)
+# concaveId = load_mesh_obstacle("concave.obj", position=[0,   0.5, 0], scale=0.4)
 
-obstacle_ids   = [concaveId]
-obstacle_names = ["Concave"]
+obstacle_ids   = [boxId, sphereId, cylinderId]
+obstacle_names = ["box", "sphere", "cylinder"]
 
 # ══════════════════════════════════════════════════════════════
 # CAMERA CAPTURE FUNCTION
