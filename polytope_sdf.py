@@ -591,7 +591,7 @@ def is_separated():
                 queue.append(nb)
     return True   # goal unreachable → separated!
 
-COST_THRESHOLD = -.2  # tweak this — more negative = stricter / thinner chain
+COST_THRESHOLD = -.8  # tweak this — more negative = stricter / thinner chain
 CHECK_EVERY = 10      # run separation check every N triangles added
 
 stop_reasons = []

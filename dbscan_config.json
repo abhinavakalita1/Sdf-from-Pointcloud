@@ -1,6 +1,6 @@
 {
   "density": 0,
-  "eps": 0.096,
-  "min_samples": 1,
+  "eps": 0.095,
+  "min_samples": 2,
   "show_cluster": 0
 }

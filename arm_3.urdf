@@ -14,7 +14,7 @@
   </material>
 
   <!-- ========================================================= -->
-  <!-- BASE LINK -->
+  <!-- BASE LINK  (unchanged) -->
   <!-- ========================================================= -->
 
   <link name="base_link">
@@ -41,83 +41,101 @@
   </link>
 
   <!-- ========================================================= -->
-  <!-- LINK 1 -->
+  <!-- LINK 1  (length 1.00 → 1.50)
+       Visual/collision centre: z = L/2 = 0.75
+       r=0.04, L=1.50, m=1.0
+         ixx = iyy = m*(3r² + L²)/12 = (3*0.0016 + 2.25)/12 = 2.2548/12 ≈ 0.1879
+         izz  = m*r²/2               = 0.0016/2               = 0.0008
+  -->
   <!-- ========================================================= -->
 
   <link name="link1">
     <visual>
-      <origin xyz="0 0 0.25" rpy="0 0 0"/>
+      <origin xyz="0 0 0.75" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.04" length="0.50"/>
+        <cylinder radius="0.04" length="1.50"/>
       </geometry>
       <material name="gray"/>
     </visual>
 
     <collision>
-      <origin xyz="0 0 0.25" rpy="0 0 0"/>
+      <origin xyz="0 0 0.75" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.04" length="0.50"/>
+        <cylinder radius="0.04" length="1.50"/>
       </geometry>
     </collision>
 
     <inertial>
-      <origin xyz="0 0 0.25" rpy="0 0 0"/>
+      <origin xyz="0 0 0.75" rpy="0 0 0"/>
       <mass value="1.0"/>
-      <inertia ixx="0.025" ixy="0.0" ixz="0.0" iyy="0.025" iyz="0.0" izz="0.001"/>
+      <inertia ixx="0.1879" ixy="0.0" ixz="0.0"
+               iyy="0.1879" iyz="0.0"
+               izz="0.0008"/>
     </inertial>
   </link>
 
   <!-- ========================================================= -->
-  <!-- LINK 2 -->
+  <!-- LINK 2  (length 1.00 → 1.50, same geometry as link1)
+       r=0.04, L=1.50, m=1.0  → same inertia as link1
+  -->
   <!-- ========================================================= -->
 
   <link name="link2">
     <visual>
-      <origin xyz="0 0 0.25" rpy="0 0 0"/>
+      <origin xyz="0 0 0.75" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.04" length="0.50"/>
+        <cylinder radius="0.04" length="1.50"/>
       </geometry>
       <material name="gray"/>
     </visual>
 
     <collision>
-      <origin xyz="0 0 0.25" rpy="0 0 0"/>
+      <origin xyz="0 0 0.75" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.04" length="0.50"/>
+        <cylinder radius="0.04" length="1.50"/>
       </geometry>
     </collision>
 
     <inertial>
-      <origin xyz="0 0 0.25" rpy="0 0 0"/>
+      <origin xyz="0 0 0.75" rpy="0 0 0"/>
       <mass value="1.0"/>
-      <inertia ixx="0.025" ixy="0.0" ixz="0.0" iyy="0.025" iyz="0.0" izz="0.001"/>
+      <inertia ixx="0.1879" ixy="0.0" ixz="0.0"
+               iyy="0.1879" iyz="0.0"
+               izz="0.0008"/>
     </inertial>
   </link>
 
   <!-- ========================================================= -->
-  <!-- LINK 3 (End Effector Link) -->
+  <!-- LINK 3  (length 0.80 → 1.20)
+       Visual/collision centre: z = L/2 = 0.60
+       r=0.04, L=1.20, m=0.8
+         ixx = iyy = 0.8*(3*0.0016 + 1.44)/12 = 0.8*1.4448/12 ≈ 0.0963
+         izz  = 0.8*0.0016/2                    = 0.00064
+  -->
   <!-- ========================================================= -->
 
   <link name="link3">
     <visual>
-      <origin xyz="0 0 0.20" rpy="0 0 0"/>
+      <origin xyz="0 0 0.60" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.04" length="0.40"/>
+        <cylinder radius="0.04" length="1.20"/>
       </geometry>
       <material name="gray"/>
     </visual>
 
     <collision>
-      <origin xyz="0 0 0.20" rpy="0 0 0"/>
+      <origin xyz="0 0 0.60" rpy="0 0 0"/>
       <geometry>
-        <cylinder radius="0.04" length="0.40"/>
+        <cylinder radius="0.04" length="1.20"/>
       </geometry>
     </collision>
 
     <inertial>
-      <origin xyz="0 0 0.20" rpy="0 0 0"/>
+      <origin xyz="0 0 0.60" rpy="0 0 0"/>
       <mass value="0.8"/>
-      <inertia ixx="0.015" ixy="0.0" ixz="0.0" iyy="0.015" iyz="0.0" izz="0.001"/>
+      <inertia ixx="0.0963" ixy="0.0" ixz="0.0"
+               iyy="0.0963" iyz="0.0"
+               izz="0.00064"/>
     </inertial>
   </link>
 
@@ -125,7 +143,7 @@
   <!-- JOINTS -->
   <!-- ========================================================= -->
 
-  <!-- Joint 1: Base Yaw -->
+  <!-- Joint 1: Base Yaw — parent top is still at z=0.10 (base unchanged) -->
   <joint name="joint1" type="revolute">
     <parent link="base_link"/>
     <child link="link1"/>
@@ -134,20 +152,20 @@
     <limit lower="-3.14" upper="3.14" effort="20" velocity="2"/>
   </joint>
 
-  <!-- Joint 2 -->
+  <!-- Joint 2 — sits at the top of link1, now 1.50 m up -->
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 0 0.50" rpy="0 0 0"/>
+    <origin xyz="0 0 1.50" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.57" upper="1.57" effort="15" velocity="2"/>
   </joint>
 
-  <!-- Joint 3 -->
+  <!-- Joint 3 — sits at the top of link2, now 1.50 m up -->
   <joint name="joint3" type="revolute">
     <parent link="link2"/>
     <child link="link3"/>
-    <origin xyz="0 0 0.50" rpy="0 0 0"/>
+    <origin xyz="0 0 1.50" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-1.57" upper="1.57" effort="12" velocity="2"/>
   </joint>

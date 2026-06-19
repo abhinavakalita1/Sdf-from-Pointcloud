@@ -79,7 +79,7 @@ p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, -10)
 planeId = p.loadURDF("plane.urdf")
 armId = p.loadURDF(
-    "arm_5.urdf", [0,0,0], p.getQuaternionFromEuler([0,0,0]),
+    "arm_3.urdf", [0,0,0], p.getQuaternionFromEuler([0,0,0]),
     useFixedBase=True,
     flags=(p.URDF_USE_INERTIA_FROM_FILE |
            p.URDF_USE_SELF_COLLISION     |
